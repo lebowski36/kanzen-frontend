@@ -1,84 +1,57 @@
 <template>
   <div class="container">
+    <!-- Header Section -->
     <div class="header">
       <h1 class="my-4">{{ board.name }}</h1>
       <ActionButtons
         :isDeleteMode="isDeleteMode"
-        @add="showPopup"
+        @add="showTicketInput"
         @delete="toggleDeleteMode"
       />
     </div>
-    <p>{{ board.description }}</p>
+
+    <!-- Board Description -->
+    <p v-html="board.description"></p>
+
+    <!-- Columns and Tickets -->
     <div class="board-columns">
       <div
         v-for="column in board.columns"
         :key="column"
         class="board-column"
-        @dragover.prevent
+        @dragover.prevent="dragOver($event)"
         @drop="drop($event, column)"
       >
         <h2>{{ column }}</h2>
         <div
-          v-for="ticket in getTicketsByColumn(column)"
+          v-for="(ticket, index) in getTicketsByColumn(column)"
           :key="ticket._id"
           class="card my-2 p-2 ticket-card"
           :class="{ 'delete-mode': isDeleteMode }"
           draggable="true"
-          @dragstart="dragStart(ticket)"
-          @click="isDeleteMode ? confirmDelete(ticket._id) : editTicket(ticket)"
+          @dragstart="dragStart(ticket, index)"
+          @dragenter.prevent="dragEnter($event, index)"
+          @click="
+            isDeleteMode ? confirmDelete(ticket._id) : showTicketInput(ticket)
+          "
         >
           <h3>{{ ticket.title || "Untitled" }}</h3>
-          <p v-html="ticket.description || 'No description'"></p>
           <span class="ticket-number">#{{ ticket.ticketNumber }}</span>
         </div>
       </div>
     </div>
 
-    <BoardPopup
-      :visible="isPopupVisible"
-      @close="hidePopup"
-      :content="currentTicket.description"
-      @update:content="updateDescription"
-      :statusOptions="board.columns"
-      :selectedStatus="currentTicket.status"
-      @update:status="updateStatus"
-      :quillEnabled="true"
-    >
-      <template #default>
-        <div class="form-group">
-          <h2>{{ editMode ? "Edit Ticket" : "Create a new Ticket" }}</h2>
-          <label for="ticketTitle">Title</label>
-          <input
-            id="ticketTitle"
-            v-model="currentTicket.title"
-            class="form-control mb-2"
-            placeholder="Ticket Title"
-          />
-          <label for="ticketStatus">Status</label>
-          <multiselect
-            v-model="currentTicket.status"
-            :options="board.columns"
-            :multiple="false"
-            :close-on-select="true"
-            placeholder="Select status"
-            label="status"
-            track-by="status"
-          />
-          <div v-if="editMode" class="form-control mb-2">
-            Ticket Number: #{{ currentTicket.ticketNumber }}
-          </div>
-        </div>
-      </template>
-      <template #buttons>
-        <button
-          @click="editMode ? updateTicket() : createTicket()"
-          class="btn btn-primary"
-        >
-          {{ editMode ? "Update Ticket" : "Create Ticket" }}
-        </button>
-      </template>
-    </BoardPopup>
+    <!-- Ticket Input Modal -->
+    <TicketInput
+      v-if="isTicketInputVisible"
+      :ticket="currentTicket"
+      :board-id="board._id"
+      :status-options="board.columns"
+      @close="hideTicketInput"
+      @save="saveTicket"
+    />
 
+    <!-- Delete Confirmation Popup -->
     <BoardPopup :visible="isDeletePopupVisible" @close="hideDeletePopup">
       <div class="form-group">
         <h2>Confirm Delete</h2>
@@ -95,141 +68,159 @@
 </template>
 
 <script>
+// Import necessary components and libraries
 import axios from "../axios";
 import BoardPopup from "../components/Popup.vue";
 import ActionButtons from "../components/ActionButtons.vue";
-import Multiselect from "vue-multiselect";
+import TicketInput from "../components/TicketInput.vue";
 
 export default {
   components: {
     ActionButtons,
     BoardPopup,
-    Multiselect,
+    TicketInput,
   },
   data() {
     return {
       statusOptions: [],
       draggedTicket: null,
       board: {
-        columns: [], // Initialize columns to prevent undefined error
+        columns: [],
       },
       tickets: [],
       currentTicket: {
         title: "",
-        description: "",
         status: "To Do",
         ticketNumber: null,
       },
-      editMode: false,
-      isPopupVisible: false,
+      isTicketInputVisible: false,
       isDeleteMode: false,
       isDeletePopupVisible: false,
       ticketToDelete: null,
     };
   },
   created() {
-    const id = this.$route.params.id;
-    axios
-      .get(`/boards/${id}`)
-      .then((response) => {
-        const boardData = response.data || {};
-        boardData.columns = boardData.columns || []; // Ensure columns is an array
-        this.board = boardData;
-        this.statusOptions = boardData.columns; // Set statusOptions here
-      })
-      .catch((error) => {
-        console.error("There was an error fetching the board:", error);
-        this.board = { columns: [] }; // Ensure board has columns array
-      });
+    const boardId = this.$route.params.id;
+    this.fetchBoardData(boardId);
+    this.fetchTickets(boardId);
 
-    axios
-      .get(`/tickets/board/${id}`)
-      .then((response) => {
-        this.tickets = response.data;
-      })
-      .catch((error) => {
-        console.error("There was an error fetching the tickets:", error);
-      });
+    const ticketNumber = this.$route.query.ticketNumber;
+    if (ticketNumber) {
+      this.fetchSingleTicket(ticketNumber);
+    }
   },
+
   methods: {
-    showPopup() {
-      this.editMode = false;
-      this.currentTicket = {
-        title: "",
-        description: "",
-        status: "To Do",
-        ticketNumber: null,
-      };
-      this.isPopupVisible = true;
+    // Fetch board data from the server
+    fetchBoardData(id) {
+      axios
+        .get(`/boards/${id}`)
+        .then((response) => {
+          const boardData = response.data || {};
+          boardData.columns = boardData.columns || [];
+          this.board = boardData;
+          this.statusOptions = boardData.columns;
+        })
+        .catch((error) => {
+          console.error("There was an error fetching the board:", error);
+          this.board = { columns: [] };
+        });
     },
-    hidePopup() {
-      this.isPopupVisible = false;
+
+    // Fetch tickets data from the server
+    fetchTickets(id) {
+      axios
+        .get(`/tickets/board/${id}`)
+        .then((response) => {
+          this.tickets = response.data;
+        })
+        .catch((error) => {
+          console.error("There was an error fetching the tickets:", error);
+        });
     },
+    fetchSingleTicket(ticketNumber) {
+      axios
+        .get(`/tickets/${ticketNumber}`)
+        .then((response) => {
+          this.showTicketInput(response.data);
+        })
+        .catch((error) => {
+          console.error("There was an error fetching the ticket:", error);
+        });
+    },
+
+    // Show the ticket input modal
+    showTicketInput(ticket = null) {
+      if (ticket) {
+        this.currentTicket = { ...ticket };
+        this.$router.push({ query: { ticketNumber: ticket.ticketNumber } });
+      } else {
+        this.currentTicket = {
+          title: "",
+          status: "To Do",
+          ticketNumber: null,
+        };
+      }
+      this.isTicketInputVisible = true;
+    },
+
+    // Hide the ticket input modal and remove the ticketNumber from the URL
+    hideTicketInput() {
+      this.isTicketInputVisible = false;
+      this.$router.push({ query: { ticketNumber: undefined } });
+    },
+
+    // Save ticket (create new or update existing)
+    saveTicket(ticket) {
+      if (ticket._id) {
+        axios
+          .put(`/tickets/${ticket._id}`, ticket)
+          .then(() => {
+            this.tickets = this.tickets.map((t) =>
+              t._id === ticket._id ? ticket : t
+            );
+            this.hideTicketInput();
+          })
+          .catch((error) => {
+            console.error("There was an error updating the ticket:", error);
+          });
+      } else {
+        axios
+          .post("/tickets", ticket)
+          .then((response) => {
+            this.tickets.push(response.data);
+            this.hideTicketInput();
+          })
+          .catch((error) => {
+            console.error("There was an error creating the ticket:", error);
+          });
+      }
+    },
+
+    // Toggle delete mode on/off
     toggleDeleteMode() {
       this.isDeleteMode = !this.isDeleteMode;
     },
+
+    // Confirm delete action
     confirmDelete(ticketId) {
       this.ticketToDelete = ticketId;
       this.isDeletePopupVisible = true;
     },
+
+    // Hide delete confirmation popup
     hideDeletePopup() {
       this.isDeletePopupVisible = false;
       this.ticketToDelete = null;
     },
-    createTicket() {
-      const ticketData = {
-        title: this.currentTicket.title,
-        description: this.currentTicket.description,
-        status: this.currentTicket.status,
-        board: this.board._id,
-      };
-      axios
-        .post("/tickets", ticketData)
-        .then((response) => {
-          this.tickets.push(response.data);
-          this.hidePopup();
-        })
-        .catch((error) => {
-          console.error("There was an error creating the ticket:", error);
-        });
-    },
-    editTicket(ticket) {
-      this.editMode = true;
-      this.currentTicket = { ...ticket };
-      this.isPopupVisible = true;
-    },
-    updateDescription(content) {
-      this.currentTicket.description = content;
-    },
-    updateStatus(status) {
-      this.currentTicket.status = status;
-    },
 
-    updateTicket() {
-      const updatedTicket = {
-        ...this.currentTicket,
-        description: this.currentTicket.description,
-      };
-      axios
-        .put(`/tickets/${updatedTicket._id}`, updatedTicket)
-        .then(() => {
-          this.tickets = this.tickets.map((ticket) =>
-            ticket._id === updatedTicket._id ? updatedTicket : ticket
-          );
-          this.hidePopup();
-        })
-        .catch((error) => {
-          console.error("There was an error updating the ticket:", error);
-        });
-    },
+    // Delete ticket
     deleteTicket() {
       axios
         .delete(`/tickets/${this.ticketToDelete}`)
         .then(() => {
-          this.tickets = this.tickets.map((ticket) =>
-            ticket._id === this.ticketToDelete
-              ? { ...ticket, deleted: true }
-              : ticket
+          this.tickets = this.tickets.filter(
+            (ticket) => ticket._id !== this.ticketToDelete
           );
           this.hideDeletePopup();
         })
@@ -237,6 +228,8 @@ export default {
           console.error("There was an error deleting the ticket:", error);
         });
     },
+
+    // Get tickets by column
     getTicketsByColumn(column) {
       return (
         this.tickets.filter(
@@ -244,17 +237,52 @@ export default {
         ) || []
       );
     },
-    dragStart(ticket) {
-      this.draggedTicket = ticket;
+
+    // Start dragging a ticket
+    dragStart(ticket, index) {
+      this.draggedTicket = { ...ticket, originalIndex: index };
     },
+
+    dragEnter(event, index) {
+      this.draggedTicket.targetIndex = index;
+    },
+    dragOver(event) {
+      event.preventDefault();
+    },
+
+    // Handle drop event for changing ticket status
     drop(event, column) {
-      const updatedTicket = { ...this.draggedTicket, status: column };
+      const dragged = this.draggedTicket;
+      const updatedTicket = { ...dragged, status: column };
+
+      // Remove the ticket from its original position
+      this.tickets = this.tickets.filter(
+        (ticket) => ticket._id !== dragged._id
+      );
+
+      // Get the tickets in the target column
+      const ticketsInColumn = this.getTicketsByColumn(column);
+
+      // Insert the ticket at the new position
+      if (
+        typeof dragged.targetIndex === "undefined" ||
+        dragged.targetIndex >= ticketsInColumn.length
+      ) {
+        // If targetIndex is not defined or is beyond the last index, add at the end
+        ticketsInColumn.push(updatedTicket);
+      } else {
+        // Otherwise, insert at the specified index
+        ticketsInColumn.splice(dragged.targetIndex, 0, updatedTicket);
+      }
+
+      // Update the tickets list
+      this.tickets = this.tickets
+        .filter((ticket) => ticket.status !== column)
+        .concat(ticketsInColumn);
+
       axios
         .put(`/tickets/${updatedTicket._id}`, { status: column })
         .then(() => {
-          this.tickets = this.tickets.map((ticket) =>
-            ticket._id === updatedTicket._id ? updatedTicket : ticket
-          );
           this.draggedTicket = null;
         })
         .catch((error) => {
@@ -266,6 +294,7 @@ export default {
 </script>
 
 <style scoped>
+/* General Container Styles */
 .container {
   max-width: 1200px;
   margin: 0 auto;
@@ -275,6 +304,7 @@ export default {
   box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
 }
 
+/* Header Styles */
 .header {
   display: flex;
   align-items: center;
@@ -307,6 +337,7 @@ export default {
   background: #e0e0e0;
 }
 
+/* Board Column Styles */
 .board-columns {
   display: flex;
   gap: 20px;
@@ -316,16 +347,36 @@ export default {
   border-radius: 10px;
   box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
 }
-
 .board-column {
   flex: 1;
   min-width: 300px;
-  background: #e6eff7;
   padding: 20px;
   border-radius: 10px;
-  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+  transition: background-color 0.3s ease;
 }
 
+.board-column:nth-child(1) {
+  background-color: #e6eff7;
+  border-left: 5px solid rgba(0, 123, 255, 0.2);
+}
+
+.board-column:nth-child(2) {
+  background-color: #f0f9e8;
+  border-left: 5px solid rgba(40, 167, 69, 0.2);
+}
+
+.board-column:nth-child(3) {
+  background-color: #fff5f5;
+  border-left: 5px solid rgba(220, 53, 69, 0.2);
+}
+
+.board-column h2::before {
+  content: "📝";
+  margin-right: 10px;
+  font-size: 1.2em;
+}
+
+/* Ticket Card Styles */
 .ticket-card {
   background: #fff;
   border: 1px solid #ddd;
@@ -341,8 +392,9 @@ export default {
   box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
 }
 
-.ticket-card.delete-mode:hover {
-  background: #f8d7da;
+.ticket-card h3 {
+  font-size: 1.25em;
+  margin-bottom: 10px;
 }
 
 .ticket-number {

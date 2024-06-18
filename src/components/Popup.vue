@@ -3,12 +3,7 @@
     <div class="popup-content">
       <button class="close-btn" @click="closePopup">x</button>
       <div class="popup-body">
-        <div v-if="quillEnabled">
-          <div ref="quillEditorContainer"></div>
-        </div>
-        <div v-else>
-          <slot></slot>
-        </div>
+        <slot></slot>
       </div>
       <div class="popup-buttons">
         <slot name="buttons"></slot>
@@ -18,8 +13,6 @@
 </template>
 
 <script>
-import Quill from "quill";
-
 export default {
   name: "BoardPopup",
   props: {
@@ -27,46 +20,8 @@ export default {
       type: Boolean,
       default: false,
     },
-    quillEnabled: {
-      type: Boolean,
-      default: false,
-    },
-    content: {
-      type: String,
-      default: "",
-    },
-  },
-  data() {
-    return {
-      quillEditor: null,
-    };
-  },
-  watch: {
-    visible(val) {
-      if (val && this.quillEnabled) {
-        this.$nextTick(() => {
-          this.initializeQuill();
-        });
-      }
-    },
-    content(val) {
-      if (this.quillEditor && val !== this.quillEditor.root.innerHTML) {
-        this.quillEditor.root.innerHTML = val;
-      }
-    },
   },
   methods: {
-    initializeQuill() {
-      if (!this.quillEditor && this.$refs.quillEditorContainer) {
-        this.quillEditor = new Quill(this.$refs.quillEditorContainer, {
-          theme: "snow",
-        });
-        this.quillEditor.root.innerHTML = this.content;
-        this.quillEditor.on("text-change", () => {
-          this.$emit("update:content", this.quillEditor.root.innerHTML);
-        });
-      }
-    },
     closePopup() {
       this.$emit("close");
     },
