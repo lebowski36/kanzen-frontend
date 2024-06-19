@@ -1,6 +1,7 @@
 <template>
   <div class="action-buttons">
     <button class="add-btn" @click="onAdd">+</button>
+    <button class="edit-btn" @click="onEdit">✏️</button>
     <button
       class="delete-btn"
       @click="onDelete"
@@ -19,10 +20,13 @@ export default {
       default: false,
     },
   },
-  emits: ["add", "delete"],
+  emits: ["add", "edit", "delete"],
   methods: {
     onAdd() {
       this.$emit("add");
+    },
+    onEdit() {
+      this.$emit("edit");
     },
     onDelete() {
       this.$emit("delete");
@@ -38,6 +42,7 @@ export default {
 }
 
 .add-btn,
+.edit-btn,
 .delete-btn {
   margin-left: 10px;
   font-size: 1.5rem;
@@ -55,6 +60,7 @@ export default {
 }
 
 .add-btn:hover,
+.edit-btn:hover,
 .delete-btn:hover {
   background: #e0e0e0;
 }

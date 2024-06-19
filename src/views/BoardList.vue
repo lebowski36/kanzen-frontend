@@ -40,6 +40,25 @@
           placeholder="Board Prefix"
           maxlength="5"
         />
+        <div class="status-management">
+          <h3>Manage statuses</h3>
+          <div
+            v-for="(column, index) in newBoard.columns"
+            :key="index"
+            class="status-item"
+            draggable="true"
+            @dragstart="dragStart(column, index)"
+            @dragenter="dragEnter($event, index)"
+            @dragover="dragOver"
+            @drop="dropStatus($event, newBoard.columns, updateColumns)"
+          >
+            <input v-model="newBoard.columns[index]" />
+          </div>
+
+          <button @click="addStatus" class="btn btn-secondary">
+            Add statuses
+          </button>
+        </div>
       </div>
       <template v-slot:buttons>
         <button @click="createBoard" class="btn btn-primary">
@@ -68,6 +87,8 @@ import axios from "../axios";
 import BoardPopup from "../components/Popup.vue";
 import { useRouter } from "vue-router";
 import ActionButtons from "../components/ActionButtons.vue";
+import { useDragAndDrop } from "../hooks/useDragAndDrop";
+import { ref } from "vue";
 
 export default {
   components: {
@@ -77,11 +98,6 @@ export default {
   data() {
     return {
       boards: [],
-      newBoard: {
-        name: "",
-        description: "",
-        prefix: "",
-      },
       isPopupVisible: false,
       isDeleteMode: false,
       isDeletePopupVisible: false,
@@ -90,10 +106,32 @@ export default {
   },
   setup() {
     const router = useRouter();
+    const { dragStart, dragEnter, dragOver, dropStatus } = useDragAndDrop();
+
     const navigateToBoard = (boardId) => {
       router.push({ name: "BoardView", params: { id: boardId } });
     };
-    return { navigateToBoard };
+
+    const newBoard = ref({
+      name: "",
+      description: "",
+      prefix: "",
+      columns: ["To Do", "In Progress", "Done"],
+    });
+
+    const updateColumns = (newColumns) => {
+      newBoard.value.columns = newColumns;
+    };
+
+    return {
+      navigateToBoard,
+      dragStart,
+      dragEnter,
+      dragOver,
+      dropStatus,
+      newBoard,
+      updateColumns,
+    };
   },
   created() {
     axios
@@ -106,6 +144,9 @@ export default {
       });
   },
   methods: {
+    addStatus() {
+      this.newBoard.columns.push("New Column");
+    },
     showPopup() {
       this.isPopupVisible = true;
     },
@@ -234,5 +275,29 @@ export default {
 
 .board-link:hover {
   text-decoration: underline;
+}
+
+.status-management {
+  margin-top: 20px;
+}
+
+.status-item {
+  display: flex;
+  align-items: center;
+  margin-bottom: 10px;
+  background: #fff;
+  padding: 10px;
+  border: 1px solid #ddd;
+  border-radius: 5px;
+}
+
+.status-item input {
+  flex: 1;
+  margin-right: 10px;
+  padding: 5px;
+}
+
+.status-item.dragging {
+  background: #e0e0e0;
 }
 </style>

@@ -40,6 +40,26 @@ export function useDragAndDrop() {
     updateCallback(items, updatedItem);
     draggedItem.value = null;
   };
+  const dropStatus = (event, items, updateCallback) => {
+    event.preventDefault(); // Add this line for clarity
+    if (!Array.isArray(items)) {
+      console.error("dropStatus: 'items' is not an array", items);
+      return;
+    }
 
-  return { dragStart, dragEnter, dragOver, drop };
+    if (!draggedItem.value) return;
+
+    const fromIndex = draggedItem.value.originalIndex;
+    const toIndex = draggedItem.value.targetIndex;
+
+    if (fromIndex !== toIndex) {
+      const itemToMove = items.splice(fromIndex, 1)[0];
+      items.splice(toIndex, 0, itemToMove);
+      updateCallback(items);
+    }
+
+    draggedItem.value = null;
+  };
+
+  return { dragStart, dragEnter, dragOver, drop, dropStatus };
 }
