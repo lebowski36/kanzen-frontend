@@ -20,7 +20,7 @@
         :key="column"
         class="board-column"
         @dragover.prevent="dragOver($event)"
-        @drop="drop($event, column)"
+        @drop="handleDrop($event, column)"
       >
         <h2>{{ column }}</h2>
         <div
@@ -31,9 +31,8 @@
           draggable="true"
           @dragstart="dragStart(ticket, index)"
           @dragenter.prevent="dragEnter($event, index)"
-          @click="
-            isDeleteMode ? confirmDelete(ticket._id) : showTicketInput(ticket)
-          "
+          @dragover.prevent="dragOver"
+          @drop="handleDrop($event, column)"
         >
           <h3>{{ ticket.title || "Untitled" }}</h3>
           <span class="ticket-number">#{{ ticket.ticketNumber }}</span>
@@ -73,6 +72,7 @@ import axios from "../axios";
 import BoardPopup from "../components/Popup.vue";
 import ActionButtons from "../components/ActionButtons.vue";
 import TicketInput from "../components/TicketInput.vue";
+import { useDragAndDrop } from "../hooks/useDragAndDrop";
 
 export default {
   components: {
@@ -80,6 +80,7 @@ export default {
     BoardPopup,
     TicketInput,
   },
+
   data() {
     return {
       statusOptions: [],
@@ -108,6 +109,16 @@ export default {
     if (ticketNumber) {
       this.fetchSingleTicket(ticketNumber);
     }
+  },
+  setup() {
+    const { dragStart, dragEnter, dragOver, drop } = useDragAndDrop();
+    return {
+      dragStart,
+      dragEnter,
+      dragOver,
+      drop,
+      // Other data and methods
+    };
   },
 
   methods: {
@@ -238,56 +249,16 @@ export default {
       );
     },
 
-    // Start dragging a ticket
-    dragStart(ticket, index) {
-      this.draggedTicket = { ...ticket, originalIndex: index };
-    },
-
-    dragEnter(event, index) {
-      this.draggedTicket.targetIndex = index;
-    },
-    dragOver(event) {
-      event.preventDefault();
-    },
-
-    // Handle drop event for changing ticket status
-    drop(event, column) {
-      const dragged = this.draggedTicket;
-      const updatedTicket = { ...dragged, status: column };
-
-      // Remove the ticket from its original position
-      this.tickets = this.tickets.filter(
-        (ticket) => ticket._id !== dragged._id
-      );
-
-      // Get the tickets in the target column
-      const ticketsInColumn = this.getTicketsByColumn(column);
-
-      // Insert the ticket at the new position
-      if (
-        typeof dragged.targetIndex === "undefined" ||
-        dragged.targetIndex >= ticketsInColumn.length
-      ) {
-        // If targetIndex is not defined or is beyond the last index, add at the end
-        ticketsInColumn.push(updatedTicket);
-      } else {
-        // Otherwise, insert at the specified index
-        ticketsInColumn.splice(dragged.targetIndex, 0, updatedTicket);
-      }
-
-      // Update the tickets list
-      this.tickets = this.tickets
-        .filter((ticket) => ticket.status !== column)
-        .concat(ticketsInColumn);
-
-      axios
-        .put(`/tickets/${updatedTicket._id}`, { status: column })
-        .then(() => {
-          this.draggedTicket = null;
-        })
-        .catch((error) => {
-          console.error("There was an error updating the ticket:", error);
-        });
+    handleDrop(event, column) {
+      const updateCallback = (items, updatedItem) => {
+        this.tickets = items;
+        axios
+          .put(`/tickets/${updatedItem._id}`, { status: column })
+          .catch((error) => {
+            console.error("There was an error updating the ticket:", error);
+          });
+      };
+      this.drop(this.tickets, column, updateCallback);
     },
   },
 };
