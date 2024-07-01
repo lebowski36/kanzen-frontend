@@ -33,6 +33,7 @@
           @dragenter.prevent="dragEnter($event, index)"
           @dragover.prevent="dragOver"
           @drop="handleDrop($event, column)"
+          @click="isDeleteMode ? confirmDelete(ticket._id) : openTicket(ticket)"
         >
           <h3>{{ ticket.title || "Untitled" }}</h3>
           <span class="ticket-number">#{{ ticket.ticketNumber }}</span>
@@ -161,6 +162,12 @@ export default {
     },
 
     // Show the ticket input modal
+    openTicket(ticket) {
+      this.showTicketInput(ticket);
+      this.$router.push({ query: { ticketNumber: ticket.ticketNumber } });
+    },
+
+    // Update showTicketInput to handle URL state
     showTicketInput(ticket = null) {
       if (ticket) {
         this.currentTicket = { ...ticket };
