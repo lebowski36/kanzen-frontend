@@ -5,7 +5,11 @@
         >Boards</a
       >
       <div class="ml-auto">
-        <a class="navbar-brand btn btn-outline-primary" @click="login">Login</a>
+        <a
+          class="navbar-brand btn btn-outline-primary"
+          @click="$emit('toggle-login-popup')"
+          >Login</a
+        >
       </div>
     </div>
   </nav>
