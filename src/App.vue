@@ -51,7 +51,6 @@
     </BoardPopup>
   </div>
 </template>
-
 <script>
 import MenuBar from "./components/MenuBar.vue";
 import BoardPopup from "./components/Popup.vue";
@@ -117,6 +116,11 @@ export default {
       toggleRegisterPopup();
     };
 
+    const logout = () => {
+      store.commit("clearLastBoardId");
+      store.dispatch("logout");
+    };
+
     return {
       isLoginPopupVisible,
       isRegisterPopupVisible,
@@ -127,6 +131,7 @@ export default {
       login,
       register,
       showRegisterPopup,
+      logout,
     };
   },
 };

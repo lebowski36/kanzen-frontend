@@ -134,15 +134,23 @@ export default {
     };
   },
   created() {
-    axios
-      .get("/boards")
-      .then((response) => {
-        this.boards = response.data;
-      })
-      .catch((error) => {
-        console.error("There was an error fetching the boards:", error);
-      });
+    if (this.$store.state.boards.length === 0) {
+      this.$store.dispatch("fetchUserBoards");
+    } else {
+      this.boards = this.$store.state.boards;
+    }
   },
+  computed: {
+    storeBoards() {
+      return this.$store.state.boards;
+    },
+  },
+  watch: {
+    storeBoards(newBoards) {
+      this.boards = newBoards;
+    },
+  },
+
   methods: {
     addStatus() {
       this.newBoard.columns.push("New Column");

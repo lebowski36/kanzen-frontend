@@ -101,16 +101,30 @@ export default {
       ticketToDelete: null,
     };
   },
+
   created() {
     const boardId = this.$route.params.id;
-    this.fetchBoardData(boardId);
-    this.fetchTickets(boardId);
+    this.$store.commit("setLastBoardId", boardId);
+    if (this.$store.state.user) {
+      this.fetchBoardData();
+      this.fetchTickets(boardId);
+    }
 
     const ticketNumber = this.$route.query.ticketNumber;
     if (ticketNumber) {
       this.fetchSingleTicket(ticketNumber);
     }
   },
+  watch: {
+    "$store.state.user"(newUser) {
+      if (newUser) {
+        const boardId = this.$route.params.id;
+        this.fetchBoardData();
+        this.fetchTickets(boardId);
+      }
+    },
+  },
+
   setup() {
     const { dragStart, dragEnter, dragOver, drop } = useDragAndDrop();
     return {
@@ -118,25 +132,31 @@ export default {
       dragEnter,
       dragOver,
       drop,
-      // Other data and methods
     };
   },
 
   methods: {
     // Fetch board data from the server
-    fetchBoardData(id) {
-      axios
-        .get(`/boards/${id}`)
-        .then((response) => {
-          const boardData = response.data || {};
-          boardData.columns = boardData.columns || [];
-          this.board = boardData;
-          this.statusOptions = boardData.columns;
-        })
-        .catch((error) => {
-          console.error("There was an error fetching the board:", error);
-          this.board = { columns: [] };
-        });
+    fetchBoardData() {
+      const boardId = this.$route.params.id;
+      const board = this.$store.state.boards.find((b) => b._id === boardId);
+      if (board) {
+        this.board = board;
+        this.statusOptions = board.columns;
+      } else {
+        axios
+          .get(`/boards/${boardId}`)
+          .then((response) => {
+            const boardData = response.data || {};
+            boardData.columns = boardData.columns || [];
+            this.board = boardData;
+            this.statusOptions = boardData.columns;
+          })
+          .catch((error) => {
+            console.error("There was an error fetching the board:", error);
+            this.board = { columns: [] };
+          });
+      }
     },
 
     // Fetch tickets data from the server

@@ -37,25 +37,64 @@ const store = createStore({
       localStorage.removeItem("user");
       localStorage.removeItem("token");
     },
+    setLastBoardId(state, boardId) {
+      localStorage.setItem("lastBoardId", boardId);
+    },
+    clearLastBoardId() {
+      localStorage.removeItem("lastBoardId");
+    },
   },
   actions: {
-    async login({ commit }, credentials) {
+    async login({ commit, dispatch }, credentials) {
       const response = await axios.post("/auth/login", credentials);
       commit("setUser", response.data.user);
       commit("setToken", response.data.token);
       axios.defaults.headers.common[
         "Authorization"
       ] = `Bearer ${response.data.token}`;
+      await dispatch("fetchUserBoards");
+
+      const boardId = localStorage.getItem("lastBoardId");
+      if (boardId) {
+        try {
+          await dispatch("fetchBoardData", boardId);
+          await dispatch("fetchBoardTickets", boardId);
+        } catch (error) {
+          console.error("Error fetching board data after login:", error);
+        }
+      }
     },
+    async fetchBoardData({ commit }, boardId) {
+      try {
+        const response = await axios.get(`/boards/${boardId}`);
+        commit("setBoards", [response.data]);
+      } catch (error) {
+        console.error("Error fetching board data:", error);
+      }
+    },
+
+    async fetchBoardTickets({ commit }, boardId) {
+      try {
+        const response = await axios.get(`/tickets/board/${boardId}`);
+        commit("setTickets", response.data);
+      } catch (error) {
+        console.error("Error fetching board tickets:", error);
+      }
+    },
+
     logout({ commit }) {
       commit("logout");
       delete axios.defaults.headers.common["Authorization"];
     },
-    async fetchUserBoards({ state }) {
-      if (state.token) {
-        return axios.get("/boards");
+    async fetchUserBoards({ commit }) {
+      try {
+        const response = await axios.get("/boards");
+        commit("setBoards", response.data);
+      } catch (error) {
+        console.error("Error fetching user boards:", error);
       }
     },
+
     async fetchUserTickets({ state }, boardId) {
       if (state.token) {
         return axios.get(`/tickets/board/${boardId}`);

@@ -48,6 +48,7 @@ export default {
     };
 
     const logout = () => {
+      store.commit("clearLastBoardId");
       store.dispatch("logout");
     };
 
