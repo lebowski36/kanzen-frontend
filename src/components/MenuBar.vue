@@ -10,7 +10,9 @@
           @click="navigateToProfile"
           >{{ user.username }}</a
         >
-        <a class="navbar-brand btn btn-outline-danger" @click="logout"
+        <a
+          class="navbar-brand btn btn-outline-danger logout-btn"
+          @click="logout"
           >Logout</a
         >
       </div>
@@ -28,19 +30,21 @@
 <script>
 import { computed } from "vue";
 import { useStore } from "vuex";
+import { useRouter } from "vue-router";
 
 export default {
   name: "MenuBar",
   setup() {
     const store = useStore();
+    const router = useRouter();
     const user = computed(() => store.state.user);
 
     const navigateToBoards = () => {
-      this.$router.push({ name: "BoardList" });
+      router.push({ name: "BoardList" });
     };
 
     const navigateToProfile = () => {
-      this.$router.push({ name: "UserProfile" });
+      router.push({ name: "UserProfile" });
     };
 
     const logout = () => {
@@ -71,5 +75,8 @@ export default {
 }
 .ml-auto {
   margin-left: auto; /* Ensures the Login button stays on the right */
+}
+.logout-btn {
+  margin-left: 10px; /* Adds space between username and Logout */
 }
 </style>
