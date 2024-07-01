@@ -74,7 +74,12 @@ export default {
   },
   data() {
     return {
-      localTicket: { ...this.ticket, board: this.boardId },
+      localTicket: {
+        ...this.ticket,
+        board: this.boardId,
+        description: this.ticket.description || "",
+      },
+
       isEditMode: !!this.ticket._id,
       isFullscreen: this.$route.query.fullscreen === "true",
     };
