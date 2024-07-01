@@ -15,7 +15,8 @@
     "vue-multiselect": "^3.0.0",
     "vue-router": "^4.3.3",
     "vue2-editor": "^2.10.3",
-    "vuedraggable": "^2.24.3"
+    "vuedraggable": "^2.24.3",
+    "vuex": "^4.1.0"
   },
   "devDependencies": {
     "@babel/core": "^7.12.16",

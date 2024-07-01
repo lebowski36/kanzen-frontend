@@ -4,7 +4,17 @@
       <a class="navbar-brand btn btn-outline-primary" @click="navigateToBoards"
         >Boards</a
       >
-      <div class="ml-auto">
+      <div class="ml-auto" v-if="user">
+        <a
+          class="navbar-brand btn btn-outline-primary"
+          @click="navigateToProfile"
+          >{{ user.username }}</a
+        >
+        <a class="navbar-brand btn btn-outline-danger" @click="logout"
+          >Logout</a
+        >
+      </div>
+      <div class="ml-auto" v-else>
         <a
           class="navbar-brand btn btn-outline-primary"
           @click="$emit('toggle-login-popup')"
@@ -16,16 +26,33 @@
 </template>
 
 <script>
+import { computed } from "vue";
+import { useStore } from "vuex";
+
 export default {
   name: "MenuBar",
-  methods: {
-    navigateToBoards() {
+  setup() {
+    const store = useStore();
+    const user = computed(() => store.state.user);
+
+    const navigateToBoards = () => {
       this.$router.push({ name: "BoardList" });
-    },
-    login() {
-      // Placeholder for future login functionality
-      console.log("Login button clicked");
-    },
+    };
+
+    const navigateToProfile = () => {
+      this.$router.push({ name: "UserProfile" });
+    };
+
+    const logout = () => {
+      store.dispatch("logout");
+    };
+
+    return {
+      user,
+      navigateToBoards,
+      navigateToProfile,
+      logout,
+    };
   },
 };
 </script>

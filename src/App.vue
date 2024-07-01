@@ -22,11 +22,9 @@
         <button class="btn btn-secondary" @click="showRegisterPopup">
           Register
         </button>
-        <!-- Add this line -->
       </template>
     </BoardPopup>
     <BoardPopup :visible="isRegisterPopupVisible" @close="toggleRegisterPopup">
-      <!-- Add this popup -->
       <div class="form-group">
         <h2>Register</h2>
         <input
@@ -58,6 +56,7 @@
 import MenuBar from "./components/MenuBar.vue";
 import BoardPopup from "./components/Popup.vue";
 import { ref } from "vue";
+import { useStore } from "vuex";
 
 export default {
   name: "App",
@@ -67,56 +66,67 @@ export default {
   },
   setup() {
     const isLoginPopupVisible = ref(false);
-    const isRegisterPopupVisible = ref(false); // Add this line
+    const isRegisterPopupVisible = ref(false);
+    const store = useStore();
+
     const loginData = ref({
       username: "",
       password: "",
     });
-    const registerData = ref({
-      // Add this line
-      username: "",
-      password: "",
-      email: "",
-    });
+    const registerData = ref({ username: "", password: "", email: "" });
 
     const toggleLoginPopup = () => {
       isLoginPopupVisible.value = !isLoginPopupVisible.value;
     };
 
     const toggleRegisterPopup = () => {
-      // Add this function
       isRegisterPopupVisible.value = !isRegisterPopupVisible.value;
     };
 
-    const login = () => {
-      // Placeholder for login functionality
-      console.log("Login data:", loginData.value);
-      toggleLoginPopup();
+    const login = async () => {
+      try {
+        await store.dispatch("login", loginData.value);
+        toggleLoginPopup();
+      } catch (error) {
+        console.error(
+          "Login failed:",
+          error.response ? error.response.data.message : error.message
+        );
+      }
     };
 
-    const register = () => {
-      // Add this function
-      // Placeholder for registration functionality
-      console.log("Register data:", registerData.value);
-      toggleRegisterPopup();
+    const register = async () => {
+      try {
+        const response = await fetch(
+          "http://localhost:5000/api/auth/register",
+          {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(registerData.value),
+          }
+        );
+        if (!response.ok) throw new Error("Registration failed");
+        toggleRegisterPopup();
+      } catch (error) {
+        console.error(error.message);
+      }
     };
 
     const showRegisterPopup = () => {
-      // Add this function
       toggleLoginPopup();
       toggleRegisterPopup();
     };
 
     return {
       isLoginPopupVisible,
-      isRegisterPopupVisible, // Add this line
+      isRegisterPopupVisible,
       toggleLoginPopup,
-      toggleRegisterPopup, // Add this line
+      toggleRegisterPopup,
       loginData,
-      registerData, // Add this line
+      registerData,
       login,
-      register, // Add this line
-      showRegisterPopup, // Add this line
+      register,
+      showRegisterPopup,
     };
   },
 };
