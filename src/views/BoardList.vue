@@ -134,7 +134,7 @@ export default {
     };
   },
   created() {
-    if (this.$store.state.boards.length === 0) {
+    if (this.$store.state.boards.length === 0 && this.$store.state.user) {
       this.$store.dispatch("fetchUserBoards");
     } else {
       this.boards = this.$store.state.boards;
@@ -172,20 +172,19 @@ export default {
       this.isDeletePopupVisible = false;
       this.boardToDelete = null;
     },
-    createBoard() {
-      axios
-        .post("/boards", this.newBoard)
-        .then((response) => {
-          this.boards.push(response.data);
-          this.newBoard.name = "";
-          this.newBoard.description = "";
-          this.newBoard.prefix = "";
-          this.hidePopup();
-        })
-        .catch((error) => {
-          console.error("There was an error creating the board:", error);
-        });
+    async createBoard() {
+      try {
+        await this.$store.dispatch("createBoard", this.newBoard);
+        this.newBoard.name = "";
+        this.newBoard.description = "";
+        this.newBoard.prefix = "";
+        this.hidePopup();
+      } catch (error) {
+        console.error("Error creating board:", error.response.data.error);
+        alert(error.response.data.error); // Display error message to the user
+      }
     },
+
     deleteBoard() {
       axios
         .delete(`/boards/${this.boardToDelete}`)

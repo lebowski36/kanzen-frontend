@@ -45,6 +45,16 @@ const store = createStore({
     },
   },
   actions: {
+    async createBoard({ commit, state }, newBoard) {
+      try {
+        const response = await axios.post("/boards", newBoard);
+        commit("setBoards", [...state.boards, response.data]);
+      } catch (error) {
+        console.error("There was an error creating the board:", error);
+        throw error; // Rethrow the error to handle it in the component
+      }
+    },
+
     async login({ commit, dispatch }, credentials) {
       const response = await axios.post("/auth/login", credentials);
       commit("setUser", response.data.user);
