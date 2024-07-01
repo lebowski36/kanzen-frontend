@@ -1,6 +1,6 @@
 <template>
-  <div class="ticket-input-overlay">
-    <div class="ticket-input-content">
+  <div :class="['ticket-input-overlay', { fullscreen: isFullscreen }]">
+    <div :class="['ticket-input-content', { fullscreen: isFullscreen }]">
       <button class="close-btn" @click="close">x</button>
       <div class="ticket-input-body">
         <div class="form-group">
@@ -38,6 +38,9 @@
         <button @click="saveTicket" class="btn btn-primary">
           {{ isEditMode ? "Update Ticket" : "Create Ticket" }}
         </button>
+        <button @click="toggleFullscreen" class="btn btn-secondary">
+          {{ isFullscreen ? "Exit Fullscreen" : "Fullscreen" }}
+        </button>
       </div>
     </div>
   </div>
@@ -48,7 +51,7 @@ import Quill from "quill";
 import "quill/dist/quill.snow.css";
 
 export default {
-  name: "TicketInput",
+  name: "TicketView",
   props: {
     ticket: {
       type: Object,
@@ -73,6 +76,7 @@ export default {
     return {
       localTicket: { ...this.ticket, board: this.boardId },
       isEditMode: !!this.ticket._id,
+      isFullscreen: this.$route.query.fullscreen === "true",
     };
   },
   mounted() {
@@ -122,6 +126,12 @@ export default {
     saveTicket() {
       this.$emit("save", this.localTicket);
     },
+    toggleFullscreen() {
+      this.isFullscreen = !this.isFullscreen;
+      this.$router.push({
+        query: { ...this.$route.query, fullscreen: this.isFullscreen },
+      });
+    },
   },
 };
 </script>
@@ -139,6 +149,12 @@ export default {
   align-items: center;
 }
 
+.ticket-input-overlay.fullscreen {
+  background: white;
+  padding: 0;
+  height: 100vh;
+}
+
 .ticket-input-content {
   background: #ffffff;
   padding: 20px;
@@ -147,6 +163,14 @@ export default {
   max-width: 100%;
   position: relative;
   box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+}
+
+.ticket-input-content.fullscreen {
+  width: 100%;
+  height: 100%;
+  border-radius: 0;
+  box-shadow: none;
+  padding: 20px;
 }
 
 .close-btn {

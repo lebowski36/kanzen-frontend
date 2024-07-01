@@ -5,7 +5,7 @@
       <h1 class="my-4">{{ board.name }}</h1>
       <ActionButtons
         :isDeleteMode="isDeleteMode"
-        @add="showTicketInput"
+        @add="showTicketView"
         @delete="toggleDeleteMode"
       />
     </div>
@@ -42,12 +42,12 @@
     </div>
 
     <!-- Ticket Input Modal -->
-    <TicketInput
-      v-if="isTicketInputVisible"
+    <TicketView
+      v-if="isTicketViewVisible"
       :ticket="currentTicket"
       :board-id="board._id"
       :status-options="board.columns"
-      @close="hideTicketInput"
+      @close="hideTicketView"
       @save="saveTicket"
     />
 
@@ -72,14 +72,14 @@
 import axios from "../axios";
 import BoardPopup from "../components/Popup.vue";
 import ActionButtons from "../components/ActionButtons.vue";
-import TicketInput from "../components/TicketInput.vue";
+import TicketView from "../components/TicketView.vue";
 import { useDragAndDrop } from "../hooks/useDragAndDrop";
 
 export default {
   components: {
     ActionButtons,
     BoardPopup,
-    TicketInput,
+    TicketView,
   },
 
   data() {
@@ -95,7 +95,7 @@ export default {
         status: "To Do",
         ticketNumber: null,
       },
-      isTicketInputVisible: false,
+      isTicketViewVisible: false,
       isDeleteMode: false,
       isDeletePopupVisible: false,
       ticketToDelete: null,
@@ -154,7 +154,7 @@ export default {
       axios
         .get(`/tickets/${ticketNumber}`)
         .then((response) => {
-          this.showTicketInput(response.data);
+          this.showTicketView(response.data);
         })
         .catch((error) => {
           console.error("There was an error fetching the ticket:", error);
@@ -163,15 +163,22 @@ export default {
 
     // Show the ticket input modal
     openTicket(ticket) {
-      this.showTicketInput(ticket);
-      this.$router.push({ query: { ticketNumber: ticket.ticketNumber } });
+      this.showTicketView(ticket);
+      this.$router.push({
+        query: { ticketNumber: ticket.ticketNumber, fullscreen: false },
+      });
     },
 
-    // Update showTicketInput to handle URL state
-    showTicketInput(ticket = null) {
+    // Update showTicketView to handle URL state
+    showTicketView(ticket = null) {
       if (ticket) {
         this.currentTicket = { ...ticket };
-        this.$router.push({ query: { ticketNumber: ticket.ticketNumber } });
+        this.$router.push({
+          query: {
+            ticketNumber: ticket.ticketNumber,
+            fullscreen: this.$route.query.fullscreen || false,
+          },
+        });
       } else {
         this.currentTicket = {
           title: "",
@@ -179,13 +186,15 @@ export default {
           ticketNumber: null,
         };
       }
-      this.isTicketInputVisible = true;
+      this.isTicketViewVisible = true;
     },
 
     // Hide the ticket input modal and remove the ticketNumber from the URL
-    hideTicketInput() {
-      this.isTicketInputVisible = false;
-      this.$router.push({ query: { ticketNumber: undefined } });
+    hideTicketView() {
+      this.isTicketViewVisible = false;
+      this.$router.push({
+        query: { ticketNumber: undefined, fullscreen: undefined },
+      });
     },
 
     // Save ticket (create new or update existing)
@@ -197,7 +206,7 @@ export default {
             this.tickets = this.tickets.map((t) =>
               t._id === ticket._id ? ticket : t
             );
-            this.hideTicketInput();
+            this.hideTicketView();
           })
           .catch((error) => {
             console.error("There was an error updating the ticket:", error);
@@ -207,7 +216,7 @@ export default {
           .post("/tickets", ticket)
           .then((response) => {
             this.tickets.push(response.data);
-            this.hideTicketInput();
+            this.hideTicketView();
           })
           .catch((error) => {
             console.error("There was an error creating the ticket:", error);
