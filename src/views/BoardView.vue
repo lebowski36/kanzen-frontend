@@ -219,6 +219,7 @@ export default {
 
     // Save ticket (create new or update existing)
     saveTicket(ticket) {
+      ticket.board = this.board._id; // Ensure the board ID is included
       if (ticket._id) {
         axios
           .put(`/tickets/${ticket._id}`, ticket)

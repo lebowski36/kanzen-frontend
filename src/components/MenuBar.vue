@@ -80,4 +80,10 @@ export default {
 .logout-btn {
   margin-left: 10px; /* Adds space between username and Logout */
 }
+.navbar {
+  position: -webkit-sticky; /* For Safari */
+  position: sticky;
+  top: 0;
+  z-index: 1000;
+}
 </style>

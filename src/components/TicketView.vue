@@ -129,8 +129,10 @@ export default {
       this.$emit("close");
     },
     saveTicket() {
+      this.localTicket.board = this.boardId; // Ensure boardId is included in the ticket data
       this.$emit("save", this.localTicket);
     },
+
     toggleFullscreen() {
       this.isFullscreen = !this.isFullscreen;
       this.$router.push({
