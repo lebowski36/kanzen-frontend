@@ -1,6 +1,6 @@
 <template>
-  <div class="popup-overlay" v-if="visible">
-    <div class="popup-content">
+  <div class="popup-overlay" v-if="visible" @click="handleOverlayClick">
+    <div class="popup-content" @click.stop>
       <button class="close-btn" @click="closePopup">x</button>
       <div class="popup-body">
         <slot></slot>
@@ -24,6 +24,9 @@ export default {
   methods: {
     closePopup() {
       this.$emit("close");
+    },
+    handleOverlayClick() {
+      this.closePopup();
     },
   },
 };

@@ -1,6 +1,12 @@
 <template>
-  <div :class="['ticket-input-overlay', { fullscreen: isFullscreen }]">
-    <div :class="['ticket-input-content', { fullscreen: isFullscreen }]">
+  <div
+    :class="['ticket-input-overlay', { fullscreen: isFullscreen }]"
+    @click="close"
+  >
+    <div
+      :class="['ticket-input-content', { fullscreen: isFullscreen }]"
+      @click.stop
+    >
       <button class="close-btn" @click="close">x</button>
       <div class="ticket-input-body">
         <div class="form-group">
@@ -79,7 +85,6 @@ export default {
         board: this.boardId,
         description: this.ticket.description || "",
       },
-
       isEditMode: !!this.ticket._id,
       isFullscreen: this.$route.query.fullscreen === "true",
     };
@@ -132,7 +137,6 @@ export default {
       this.localTicket.board = this.boardId; // Ensure boardId is included in the ticket data
       this.$emit("save", this.localTicket);
     },
-
     toggleFullscreen() {
       this.isFullscreen = !this.isFullscreen;
       this.$router.push({
