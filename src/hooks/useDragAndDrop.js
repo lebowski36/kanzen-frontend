@@ -41,7 +41,7 @@ export function useDragAndDrop() {
     draggedItem.value = null;
   };
   const dropStatus = (event, items, updateCallback) => {
-    event.preventDefault(); // Add this line for clarity
+    event.preventDefault();
     if (!Array.isArray(items)) {
       console.error("dropStatus: 'items' is not an array", items);
       return;

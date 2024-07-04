@@ -6,6 +6,7 @@
       <ActionButtons
         :isDeleteMode="isDeleteMode"
         @add="showTicketView"
+        @edit="showEditPopup"
         @delete="toggleDeleteMode"
       />
     </div>
@@ -64,6 +65,55 @@
         </button>
       </template>
     </BoardPopup>
+    <BoardPopup :visible="isEditPopupVisible" @close="handleEditPopupClose">
+      <div class="form-group">
+        <h2>Edit Board</h2>
+        <input
+          v-model="board.name"
+          class="form-control mb-2"
+          placeholder="Board Name"
+        />
+        <div class="status-management">
+          <h3>Manage statuses</h3>
+          <div
+            v-for="(column, index) in board.columns"
+            :key="index"
+            class="status-item"
+            draggable="true"
+            @dragstart="dragStart(column, index)"
+            @dragenter="dragEnter($event, index)"
+            @dragover="dragOver"
+            @drop="dropStatus($event, board.columns, updateColumns)"
+          >
+            <input v-model="board.columns[index]" :disabled="true" />
+            <button
+              @click="deleteColumn(index)"
+              :disabled="hasTickets(column)"
+              class="btn btn-danger"
+            >
+              Delete
+            </button>
+          </div>
+          <div class="new-status-item" v-if="isAddingColumn">
+            <input v-model="newColumnName" placeholder="Enter column name" />
+            <button @click="confirmAddColumn" class="btn btn-primary">
+              Add
+            </button>
+            <button @click="cancelAddColumn" class="btn btn-secondary">
+              Cancel
+            </button>
+          </div>
+          <button @click="startAddingColumn" v-else class="btn btn-secondary">
+            Add Column
+          </button>
+        </div>
+      </div>
+      <template v-slot:buttons>
+        <button @click="saveBoardChanges" class="btn btn-primary">
+          Save Changes
+        </button>
+      </template>
+    </BoardPopup>
   </div>
 </template>
 
@@ -99,6 +149,9 @@ export default {
       isDeleteMode: false,
       isDeletePopupVisible: false,
       ticketToDelete: null,
+      isEditPopupVisible: false,
+      isAddingColumn: false,
+      newColumnName: "",
     };
   },
 
@@ -126,12 +179,14 @@ export default {
   },
 
   setup() {
-    const { dragStart, dragEnter, dragOver, drop } = useDragAndDrop();
+    const { dragStart, dragEnter, dragOver, drop, dropStatus } =
+      useDragAndDrop();
     return {
       dragStart,
       dragEnter,
       dragOver,
       drop,
+      dropStatus,
     };
   },
 
@@ -244,6 +299,64 @@ export default {
           });
       }
     },
+    showEditPopup() {
+      this.isEditPopupVisible = true;
+    },
+    hasTickets(column) {
+      return this.tickets.some((ticket) => ticket.status === column);
+    },
+    deleteColumn(index) {
+      this.board.columns.splice(index, 1);
+    },
+    startAddingColumn() {
+      this.isAddingColumn = true;
+    },
+    cancelAddColumn() {
+      this.isAddingColumn = false;
+      this.newColumnName = "";
+    },
+    confirmAddColumn() {
+      if (this.newColumnName.trim()) {
+        this.board.columns.push(this.newColumnName.trim());
+        this.newColumnName = "";
+        this.isAddingColumn = false;
+      }
+    },
+    updateColumns(newColumns) {
+      this.board.columns = newColumns;
+    },
+    saveBoardChanges() {
+      this.$store
+        .dispatch("updateBoard", this.board)
+        .then(() => this.hideEditPopup())
+        .catch((error) => console.error("Error saving board changes:", error));
+    },
+    hideEditPopup() {
+      this.isEditPopupVisible = false;
+    },
+    handleEditPopupClose() {
+      this.hideEditPopup();
+      this.refetchBoardData();
+    },
+    refetchBoardData() {
+      const boardId = this.$route.params.id;
+      axios
+        .get(`/boards/${boardId}`)
+        .then((response) => {
+          const boardData = response.data || {};
+          boardData.columns = boardData.columns || [];
+          this.board = boardData;
+          this.statusOptions = boardData.columns;
+        })
+        .catch((error) => {
+          console.error("There was an error fetching the board:", error);
+          this.board = { columns: [] };
+        });
+    },
+
+    addColumn() {
+      this.board.columns.push("New Column");
+    },
 
     // Toggle delete mode on/off
     toggleDeleteMode() {
@@ -304,12 +417,12 @@ export default {
 <style scoped>
 /* General Container Styles */
 .container {
-  max-width: 1200px;
+  max-width: 2000px;
   margin: 0 auto;
   padding: 20px;
-  background: #343a40; /* Changed from #f0f4f8 */
+  background: #343a40;
   border-radius: 10px;
-  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3); /* Increased shadow for better contrast */
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
 }
 
 /* Header Styles */

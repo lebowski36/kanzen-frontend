@@ -26,6 +26,15 @@ const store = createStore({
     setBoards(state, boards) {
       state.boards = boards;
     },
+    updateBoard(state, updatedBoard) {
+      const index = state.boards.findIndex(
+        (board) => board._id === updatedBoard._id
+      );
+      if (index !== -1) {
+        state.boards.splice(index, 1, updatedBoard);
+      }
+    },
+
     setTickets(state, tickets) {
       state.tickets = tickets;
     },
@@ -54,7 +63,15 @@ const store = createStore({
         throw error; // Rethrow the error to handle it in the component
       }
     },
-
+    async updateBoard({ commit }, board) {
+      try {
+        const response = await axios.put(`/boards/${board._id}`, board);
+        commit("updateBoard", response.data);
+      } catch (error) {
+        console.error("Error updating board:", error);
+        throw error;
+      }
+    },
     async login({ commit, dispatch }, credentials) {
       const response = await axios.post("/auth/login", credentials);
       commit("setUser", response.data.user);
