@@ -136,3 +136,8 @@ export default {
   },
 };
 </script>
+<style>
+body {
+  background-color: rgb(78, 77, 77);
+}
+</style>

@@ -11,7 +11,7 @@
     </div>
 
     <!-- Board Description -->
-    <p v-html="board.description"></p>
+    <p v-html="board.description" class="board-description"></p>
 
     <!-- Columns and Tickets -->
     <div class="board-columns">
@@ -307,9 +307,9 @@ export default {
   max-width: 1200px;
   margin: 0 auto;
   padding: 20px;
-  background: #f0f4f8;
+  background: #343a40; /* Changed from #f0f4f8 */
   border-radius: 10px;
-  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3); /* Increased shadow for better contrast */
 }
 
 /* Header Styles */
@@ -350,32 +350,18 @@ export default {
   display: flex;
   gap: 20px;
   overflow-x: auto;
-  background: #fff;
+  background: #495057;
   padding: 10px;
   border-radius: 10px;
   box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
 }
 .board-column {
   flex: 1;
-  min-width: 300px;
+  min-width: 00px;
   padding: 20px;
   border-radius: 10px;
   transition: background-color 0.3s ease;
-}
-
-.board-column:nth-child(1) {
-  background-color: #e6eff7;
-  border-left: 5px solid rgba(0, 123, 255, 0.2);
-}
-
-.board-column:nth-child(2) {
-  background-color: #f0f9e8;
-  border-left: 5px solid rgba(40, 167, 69, 0.2);
-}
-
-.board-column:nth-child(3) {
-  background-color: #fff5f5;
-  border-left: 5px solid rgba(220, 53, 69, 0.2);
+  background-color: #6c757d;
 }
 
 .board-column h2::before {
@@ -386,18 +372,18 @@ export default {
 
 /* Ticket Card Styles */
 .ticket-card {
-  background: #fff;
-  border: 1px solid #ddd;
+  background: #adb5bd;
+  border: 1px solid #6c757d;
   border-radius: 10px;
   padding: 20px;
   margin-bottom: 10px;
   transition: box-shadow 0.3s ease;
   cursor: pointer;
-  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.3);
 }
 
 .ticket-card:hover {
-  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.4);
 }
 
 .ticket-card h3 {
@@ -409,6 +395,11 @@ export default {
   display: block;
   margin-top: 10px;
   font-size: 0.9rem;
-  color: #888;
+  color: rgb(0, 0, 0);
+}
+
+.my-4,
+.board-description {
+  color: white;
 }
 </style>

@@ -46,13 +46,13 @@ export default {
 }
 
 .popup-content {
-  background: #ffffff;
+  background: #495057;
   padding: 20px;
   border-radius: 10px;
   width: 400px;
   max-width: 100%;
   position: relative;
-  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
 }
 
 .close-btn {
@@ -63,11 +63,11 @@ export default {
   border: none;
   font-size: 1.5rem;
   cursor: pointer;
-  color: #888;
+  color: #adb5bd;
 }
 
 .close-btn:hover {
-  color: #333;
+  color: #ffffff;
 }
 
 .popup-body {

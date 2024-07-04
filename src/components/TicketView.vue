@@ -7,6 +7,10 @@
       :class="['ticket-input-content', { fullscreen: isFullscreen }]"
       @click.stop
     >
+      <div class="ticket-number" @click="copyTicketLink">
+        <span v-if="!showCopyIcon">{{ localTicket.ticketNumber }}</span>
+        <span v-else class="copy-icon">📋</span>
+      </div>
       <button class="close-btn" @click="close">x</button>
       <div class="ticket-input-body">
         <div class="form-group">
@@ -19,9 +23,12 @@
             placeholder="Ticket Title"
           />
           <label for="ticketDescription">Description</label>
-          <div ref="quillToolbar"></div>
-          <div ref="quillEditorContainer"></div>
-          <label for="ticketStatus">Status</label>
+          <div class="quill-editor-container">
+            <div ref="quillToolbar"></div>
+            <div ref="quillEditorContainer"></div>
+          </div>
+
+          <label for="ticketStatus" class="ticket-status">Status</label>
           <select
             id="ticketStatus"
             v-model="localTicket.status"
@@ -35,9 +42,6 @@
               {{ status }}
             </option>
           </select>
-          <div v-if="isEditMode" class="form-control mb-2">
-            Ticket Number: #{{ localTicket.ticketNumber }}
-          </div>
         </div>
       </div>
       <div class="ticket-input-buttons">
@@ -87,6 +91,7 @@ export default {
       },
       isEditMode: !!this.ticket._id,
       isFullscreen: this.$route.query.fullscreen === "true",
+      showCopyIcon: false, // New data property
     };
   },
   mounted() {
@@ -130,6 +135,21 @@ export default {
         this.localTicket.description = this.quillEditor.root.innerHTML;
       });
     },
+    copyTicketLink() {
+      const ticketLink = `http://localhost:8080/board/${this.localTicket.board}?ticketNumber=${this.localTicket.ticketNumber}&fullscreen=true`;
+      navigator.clipboard
+        .writeText(ticketLink)
+        .then(() => {
+          this.showCopyIcon = true;
+          setTimeout(() => {
+            this.showCopyIcon = false;
+          }, 2000);
+        })
+        .catch((err) => {
+          console.error("Failed to copy ticket link: ", err);
+        });
+    },
+
     close() {
       this.$emit("close");
     },
@@ -146,7 +166,7 @@ export default {
   },
 };
 </script>
-
+<!-- TicketView.vue -->
 <style scoped>
 .ticket-input-overlay {
   position: fixed;
@@ -154,7 +174,7 @@ export default {
   left: 0;
   width: 100%;
   height: 100%;
-  background: rgba(0, 0, 0, 0.5);
+  background: rgba(0, 0, 0, 0.8);
   display: flex;
   justify-content: center;
   align-items: center;
@@ -167,13 +187,13 @@ export default {
 }
 
 .ticket-input-content {
-  background: #ffffff;
+  background: #495057;
   padding: 20px;
   border-radius: 10px;
   width: 500px;
   max-width: 100%;
   position: relative;
-  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
 }
 
 .ticket-input-content.fullscreen {
@@ -182,43 +202,73 @@ export default {
   border-radius: 0;
   box-shadow: none;
   padding: 20px;
+  background: #343a40;
 }
 
 .close-btn {
   position: absolute;
-  top: 10px;
+  top: 4px;
   right: 10px;
   background: none;
   border: none;
-  font-size: 1.5rem;
+  font-size: 2.5rem;
   cursor: pointer;
-  color: #888;
+  color: #adb5bd;
 }
 
-.close-btn:hover {
-  color: #333;
+.close-btn:hover,
+h2,
+label {
+  color: #ffffff;
 }
 
 .ticket-input-body {
   margin-bottom: 20px;
 }
 
+.quill-editor-container {
+  background: white;
+  border-radius: 4px;
+  overflow: hidden;
+}
+
+.quill-editor-container .ql-toolbar,
+.quill-editor-container .ql-container {
+  border-color: #ccc;
+}
+
 .ticket-input-body .ql-container {
-  height: 200px; /* Approx. 8 rows */
+  height: 200px;
   overflow-y: auto;
 }
-
-.ticket-input-body select {
-  width: 100%;
-  padding: 8px;
-  border-radius: 4px;
-  border: 1px solid #ccc;
-  margin-bottom: 10px;
-}
-
 .ticket-input-buttons {
   display: flex;
   justify-content: flex-end;
   gap: 10px;
+}
+
+.ticket-status {
+  padding-top: 8px;
+}
+.ticket-number {
+  position: absolute;
+  top: 18px;
+  right: 50px; /* Adjust the spacing to place it left of the close button */
+  cursor: pointer;
+  color: #4c94ff; /* Bootstrap primary color for links */
+  text-decoration: underline;
+  font-weight: bold;
+  font-size: 1.5rem;
+  text-align: center; /* Center the text/icon */
+}
+
+.ticket-number:hover {
+  color: #0056b3; /* Darker shade for hover effect */
+}
+
+.copy-icon {
+  font-size: 1.5rem;
+  color: green;
+  display: inline-block;
 }
 </style>

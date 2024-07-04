@@ -209,9 +209,9 @@ export default {
   padding: 20px;
   display: flex;
   flex-direction: column;
-  background: #f0f4f8;
+  background: rgb(52, 58, 64);
   border-radius: 10px;
-  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
 }
 
 .header {
@@ -222,6 +222,7 @@ export default {
 .header h1 {
   margin: 0;
   margin-right: 10px;
+  color: white;
 }
 
 .add-board-btn,
@@ -250,18 +251,18 @@ export default {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
   gap: 20px;
-  background: #fff;
+  background: rgb(108, 117, 125);
   padding: 10px;
   border-radius: 10px;
   box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
 }
 
 .board-item {
-  background: #e6eff7;
+  background: rgb(173, 181, 189);
   padding: 20px;
   border-radius: 10px;
   text-align: center;
-  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.3);
   transition: transform 0.3s ease;
   cursor: pointer;
 }
@@ -271,13 +272,13 @@ export default {
 }
 
 .board-item.delete-mode:hover {
-  background: #f8d7da;
+  background: #dc3545;
 }
 
 .board-link {
   text-decoration: none;
   font-size: 1.2rem;
-  color: #333;
+  color: black;
 }
 
 .board-link:hover {
